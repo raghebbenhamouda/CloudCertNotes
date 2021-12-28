@@ -1604,6 +1604,32 @@ The requester must be authenticated in AWS (cannot be anonymous).
 - 7 day retention, max 35 days
 - DB snapshots are manually triggered by user but can be retained as long as you want
 
+
+## RDS Multi-AZ:
+
+-Your application talks to one DNS name and in case there is a problem with the Master, there will be an automatic failover to the standby database.
+-The standby database is just for standby.No one can read to it. No one can write to it, it's just here as a failover in case anything goes on with your Master database.
+- Disaster recovery in AWS always looks to ensure standby copies of resources are maintained in a separate geographical area. This way, if a disaster (natural disaster, political conflict, etc.) ever struck where your original resources are, the copies would be unaffected.
+- When you provision a Multi-AZ DB Instance, Amazon RDS automatically creates a primary DB instance and synchronously replicates the data to a standby instance in a different Availability Zone (AZ). Each AZ runs on its own physically distinct, independent infrastructure, and is engineered to be highly reliable.
+- With a Multi-AZ configuration, EC2 connects to its RDS data store using a DNS address masked as a connection string. If the primary DB fails, Multi-AZ is smart enough to detect that failure and automatically update the DNS address to point at the secondary. No manual intervention is required and AWS takes care of swapping the IP address in DNS.
+- Multi-AZ is supported for all DB flavors except aurora. This is because Aurora is completely fault-tolerant on its own.
+- Multi-AZ feature allows for high availability across availability zones and not regions.
+- During a failover, the recovered former primary becomes the new secondary and the promoted secondary becomes primary. Once the original DB is recovered, there will be a sync process kicked off where the two DBs mirror each other once to sync up on the new data that the failed former primary might have missed out on.
+- You can force a failover for a Multi-AZ setup by rebooting the primary instance
+- With a Multi-AZ RDS configuration, backups are taken from the standby.
+
+
+## RDS Read Replicas:
+- Read Replication is exclusively used for performance enhancement.
+- With a Read Replica configuration, EC2 connects to the RDS backend using a DNS address and every write that is received by the master database is also passed onto a DB secondary so that it becomes a perfect copy of the master. This has the overall effect of reducing the number of transactions on the master because the secondary DBs can be queried for the same data. 
+- However, if the master DB were to fail, there is no automatic failover. You would have to manually create a new connection string to sync with one of the read replicas so that it becomes a master on its own. Then you’d have to update your EC2 instances to point at the read replica. You can have up to have copies of your master DB with read replication.
+- You can promote read replicas to be their very own production database if needed.
+- Read replicas are supported for all six flavors of DB on top of RDS.
+- Each Read Replica will have its own DNS endpoint. 
+- Automated backups must be enabled in order to use read replicas.
+- You can have read replicas with Multi-AZ turned on or have the read replica in an entirely separate region. You can have even have read replicas of read replicas, but watch out for latency or replication lag.
+The caveat for Read Replicas is that they are subject to small amounts of replication lag. This is because they might be missing some of the latest transactions as they are not updated as quickly as primaries. Application designers need to consider which queries have tolerance to slightly stale data. Those queries should be executed on the read replica, while those demanding completely up-to-date data should run on the primary node.
+
 ## RDS Security and Encryption
 
 - IAM and Networking
@@ -1677,7 +1703,7 @@ The requester must be authenticated in AWS (cannot be anonymous).
 - Fully managed ⇒ More expensive than RDS but more efficient
 - Compatible with drivers for MySQL and PostgreSQL
 - Cloud-native and optimized when compared to MySQL (5x) and PostgreSQL (3x)
-- Automatically scales in 10GB increments up to 64TB ⇒ Push-button scaling
+- Automatically scales in 10GB increments up to 128TB ⇒ Push-button scaling
 - Automatically patched with zero downtime and maintained
 - Advanced monitoring features
 - Backtrack ⇒ point-in-time restore without using backups
@@ -1698,6 +1724,20 @@ The requester must be authenticated in AWS (cannot be anonymous).
 - Aurora Security
     - Very similar to RDS
     - You are responsible for correct configuration of Security Groups
+    - Possibility to authenticate using IAM token (same method as RDS)
+
+
+### Aurora Cluster Endpoints:
+- Using cluster endpoints, you map each connection to the appropriate instance or group of instances based on your use case.
+- You can connect to cluster endpoints associated with different roles or jobs across your Aurora DB. This is because different instances or groups of instances perform different functions.
+- For example, to perform DDL statements you can connect to the primary instance. To perform queries, you can connect to the reader endpoint, with Aurora automatically performing load-balancing among all the Aurora Replicas behind the reader endpoint. For diagnosis or tuning, you can connect to a different endpoint to examine details. 
+- Since the entryway for your DB Instance remains the same after a failover, your application can resume database operation without the need for manual administrative intervention for any of your endpoints.
+
+### Aurora Reader Endpoints:
+- Aurora Reader endpoints are a subset of the above idea of cluster endpoints. Use the reader endpoint for read operations, such as queries. By processing those statements on the read-only Aurora Replicas, this endpoint reduces the overhead on the primary instance. 
+- There are up 15 Aurora Read Replicas because a Reader Endpoint to help handle read-only query traffic.
+- It also helps the cluster to scale the capacity to handle simultaneous SELECT queries, proportional to the number of Aurora Replicas in the cluster. Each Aurora DB cluster has one reader endpoint.
+- If the cluster contains one or more Aurora Replicas, the reader endpoint load-balances each connection request among the Aurora Replicas. In that case, you can only perform read-only statements such as SELECT in that session. If the cluster only contains a primary instance and no Aurora Replicas, the reader endpoint connects to the primary instance directly. In that case, you can perform write operations through the endpoint.
 
 ## Aurora Serverless
 
@@ -1712,6 +1752,15 @@ The requester must be authenticated in AWS (cannot be anonymous).
 - Up to 5 secondary read-only Regions with less than 1 second replication lag
 - Up to 16 read replica per secondary region ⇒ Decrease latency
 - Promoting another region to primary has Recovery Time Objective (RTO) of < 1 min
+
+## Aurora Multi-Master
+
+- All the Aurora instances can do writes and in case one Aurora instance fails then you can automatically failover to another one giving you immediate failover for the writer node.
+
+## Aurora Machine Learning
+
+- Enables you to add ML-based predictions to your applications via SQL
+- Simple, optimized, and secure integration between Aurora and AWS ML services
 
 ## Aurora Use Cases
 
@@ -1744,12 +1793,22 @@ The requester must be authenticated in AWS (cannot be anonymous).
 - Automatically patched with zero downtime and maintained
 - Advanced monitoring features
 
+## Solution Architecture - DB Cache
+
+- Applications queries ElastiCache, if not available, get from RDS and store in ElastiCache.
+
+## Solution Architecture – User Session Store
+
+- User logs into any of the application, The application writes the session data into ElastiCache.
+-If the user hits another instance of our application, The instance retrieves the data and the user is already logged in
+
+
 ## Cache Security
 
 - Does not support IAM authentication
 - IAM policies on ElastiCache are for API-level security
-- SSL in-flight encryption
-- Redis AUTH ⇒ password/token on cluster creation
+- SSL in-flight encryption for Redis
+- Redis AUTH ⇒  You can set a password/token on cluster creation
 - Memcached supports SASL-based authentication
 
 ## Redis vs Memcached
@@ -1773,7 +1832,12 @@ The requester must be authenticated in AWS (cannot be anonymous).
             - Update cache data when written to DB (no stale)
         - Session Store
             - Temporary session data (using time to live settings)
+      
+     -Redis really is for high availability, backup, Read Replicas
+     -Memcached is a pure case of partitioning of data (sharding)
+     -Memcached is really intended to serve as a pure cache. While Redis can also be used as a database.
 
+ 
 ## ElastiCache Use Cases
 
 - Query storage ⇒ reduce same read workloads
