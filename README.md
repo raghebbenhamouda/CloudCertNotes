@@ -2744,6 +2744,13 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Multiple applications can consume the same stream
 - Useful when we have very large amount of data that needs to be ordered in many shards
 
+## Ordering data into Kinesis
+- Imagine you have 100 trucks (truck_1, truck_2, … truck_100) on the road sending their GPS positions regularly into AWS.
+- You want to consume the data in order for each truck, so that you can track their movement accurately.
+- How should you send that data into Kinesis?
+- Answer: send using a “Partition Key” value of the “truck_id”
+- The same key will always go to the same shard
+
 ## Kinesis API
 
 - PutRecords API
@@ -3252,7 +3259,11 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 
 - Containter orchestration service that helps run Docker containers on EC2 machines
 - Several services are based on ECS
-    - ECS Core: the basic ECS, running containers on EC2
+    - ECS Core: Amazon’s own container platform
+        - Launch Docker containers on EC2
+        - **You must provision & maintain the infrastructure (the EC2 instances)**
+        - AWS takes care of starting/stopping containers
+        - Has integrations with the Application Load Balancer
     - Fargate: ECS tasks on serverless computing resources
         - Only set the number of tasks to run and AWS manages the infrastructure
     - EKS: ECS with Kubernetes
@@ -3271,13 +3282,49 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - `ECS_ENABLE_TASK_IAM_ROLE` ⇒ Enable IAM Roles
 - ECS terminology
     - ECS Cluster ⇒ A set of EC2 instances
-    - ECS Service ⇒ Definitions of the applications running on a Cluster
+    - ECS Service ⇒ A set of tasks
     - ECS Task and Definition ⇒ Containers running to complete a service
     - ECS IAM Task Role ⇒ Each container has a role assigned to interface with AWS resources
 - ALB-ECS integration
     - Allows multiple instances of the same application on one EC2 instance via Port Mapping
     - Optimize instance performances and increase resiliency of the application without scaling
 
+## Amazon EC2 Launch Type for ECS
+
+- The containers belong to one or more Auto Scaling groups. And then we want to register them with the Amazon ECS cluster. We run the ECS agent onto these instances, and we don't have to do this manually. If we're using an AMI made for ECS.
+- Thanks to this ECS agent, these container instances are going to be registered to the Amazon ECS cluster, and they can be used to start launching some ECS tasks.
+
+## Fargate Launch Type for ECS
+
+- The Fargate service is going to launch a task. 
+- to access this Fargate task, **we get an elastic network interfaces(ENI) per task**.
+
+## IAM Roles for ECS Tasks:
+
+- **EC2 Instance Profile**:
+    - Used by the ECS agent to makes API calls to ECS service
+    - Send container logs to CloudWatch Logs
+    - Pull Docker image from ECR
+- **ECS Task Role**:
+    - Allow each task to have a specific role   
+
+## ECS Data Volumes – EFS File Systems
+
+- Works for both EC2 Tasks and Fargate tasks
+- Ability to mount EFS volumes onto tasks
+- Fargate + EFS = serverless + data storage without managing servers
+- Use case: persistent multi-AZ shared storage for your containers
+    
+## ECS Services & Tasks, Load Balancing
+
+- ECS Services & Tasks
+    - expose the tasks of a specific service using ALB
+-Load Balancing for EC2 Launch Type
+    - expose a service's task that are runnig on ec2
+    - We get a **dynamic port** 
+- Load Balancing for Fargate
+    - Each task has a unique IP due to the ENI
+    
 ## Step Functions
 
 - Serverless orchestration for Lambda functions and workflows
