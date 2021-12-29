@@ -1511,8 +1511,8 @@ The requester must be authenticated in AWS (cannot be anonymous).
         - Improved Snowball, up to 100TB, storage/compute/compute w/GPU optimized
         - Supports EC2 AMIs and Lambda functions for processing on the go
         - types:
-            -Snowball Edge Storage Optimized: 80 TB of HDD capacity for block volume and S3 compatible object storage
-            -Snowball Edge Compute Optimized: 42 TB of HDD capacity for block volume and S3 compatible object storage 
+            - Snowball Edge Storage Optimized: 80 TB of HDD capacity for block volume and S3 compatible object storage
+            - Snowball Edge Compute Optimized: 42 TB of HDD capacity for block volume and S3 compatible object storage 
     
     - Snowmobile
         - Exabyte-scale data transfer service for extremely large data transfers
