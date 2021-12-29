@@ -1439,7 +1439,7 @@ The requester must be authenticated in AWS (cannot be anonymous).
 
 ## Storage Gateway Overview
 
-- Used for hybrid cloud solutions
+- Used for hybrid cloud solutions(Part of your infrastructure on the cloud and part on-premises)
 - Gives connection to S3 data on-premise
 - Three types of Storage Gateway
     - File Gateway ⇒ File access or NFS
@@ -1448,6 +1448,7 @@ The requester must be authenticated in AWS (cannot be anonymous).
         - Supports S3 Standard, S3 IA, S3 One-Zone IA
         - Each File Gateway has its own IAM Role
         - Caches recently accessed data in the File Gateway
+        - Integrated with Active Directory (AD) for user authentication
     - Volume Gateway ⇒ Block storage, iSCSI
         - Used for block storage backed by S3 via iSCSI protocol
         - Uses EBS snapshot for on-premise volume restore
@@ -1457,6 +1458,8 @@ The requester must be authenticated in AWS (cannot be anonymous).
     - Tape Gateway ⇒ Tape backup, VTL, Backup with iSCSI
         - Transfer backup jobs from tape to the cloud while keeping tools and processes on-premise
         - Virtual Tape Library (VTL) backed by S3 and Glacier
+-Hardware appliance
+    -Using Storage Gateway means you need on-premises virtualization Otherwise, you can use a Storage Gateway Hardware Appliance
 
 ## Storage Gateway Use cases
 
@@ -1470,10 +1473,12 @@ The requester must be authenticated in AWS (cannot be anonymous).
 ## FSx Overview
 
 - Fully managed file system share drive
+- Launch 3rd party high-performance file systems on AWS
 - Scalable distributed file system
 - Two types
     - FSx for Windows
         - Windows alternative to EFS (which is POSIX ⇒ Linux only)
+        - Share storage between Windows servers
         - Supports SMB protocol and Windows NTFS
         - Integrates with Microsoft Active Directory, ACL, user quotas
         - Built on SSD, millions of IOPS, 100s PB of data, 10s GB/s
@@ -1481,13 +1486,17 @@ The requester must be authenticated in AWS (cannot be anonymous).
         - Backed daily to S3
     - FSx for Lustre
         - Parallel distributed file system for large-scale computing
-        - For Machine Learning and High Performance Computing (HPC)
-        - Electronic Design Automation, financial modeling, image/video processing
+        - For Machine Learning and **High Performance Computing (HPC)**
+        - A way to expose S3 buckets as a file system as well to your Linux instances
         - 100s GB/s, millions of IOPS, sub-ms latency
         - Integrates with S3 for read/write
         - Can be used on on-premise servers
 - Pay for provisioned storage and throughput capacity (automatic selection for Lustre)
 - Encrypted at rest, security via VPC and security groups
+
+## Amazon FSx File Gateway
+
+-The File Gateway is just a proxy and it will access your file systems on the cloud directly. But the feature that the File Gateway has that is the local cache for frequently accessed data And that means that your data on the FSx File Gateway is going to be cached.
 
 # AWS Snow Family
 
@@ -1505,6 +1514,7 @@ The requester must be authenticated in AWS (cannot be anonymous).
 - Different classes
     - Snowcone
         - Up to 8TB for all Snow jobs
+        - Can be sent back to AWS offline, or connect it to internet and use **AWS DataSync** to send data
     - Snowball
         - Up to 80TB for all Snow jobs
     - Snowball Edge
@@ -1515,7 +1525,7 @@ The requester must be authenticated in AWS (cannot be anonymous).
             - Snowball Edge Compute Optimized: 42 TB of HDD capacity for block volume and S3 compatible object storage 
     
     - Snowmobile
-        - Exabyte-scale data transfer service for extremely large data transfers
+        - Exabyte-scale data transfer service for extremely large data transfers**(more than 10 PB)**
 - Used when data transfer would be too slow/expensive over the network
 - Used for disaster recovery, large data transfers, decommission of data centers, on-the-go computing
 - Cannot import directly into Glacier, has to use S3 lifecycle policies
@@ -1526,6 +1536,28 @@ The requester must be authenticated in AWS (cannot be anonymous).
 2. Install Snow client on-premise
 3. Transfer data
 4. Ship back to AWS
+
+## Edge Computing 
+
+- Process data while it’s being created on an edge location
+- Snow Family Types
+    - Snowcone (smaller)
+        - 2 CPUs, 4 GB of memory, wired or wireless access
+        - USB-C power using a cord or the optional battery
+    - Snowball Edge – Compute Optimized
+        - 52 vCPUs, 208 GiB of RAM
+        - Optional GPU (useful for video processing or machine learning)
+        - 42 TB usable storage
+    - Snowball Edge – Storage Optimized
+        - Up to 40 vCPUs, 80 GiB of RAM
+        - Object storage clustering available     
+     - AWS OpsHub
+        - a software you install on your computer / laptop) to manage your Snow Family Device
+
+## Snowball into Glacier
+
+- Snowball cannot import to Glacier directly
+- You must use Amazon S3 first, in combination with an S3 lifecycle policy           
 
 # AWS Databases
 
