@@ -1910,13 +1910,17 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Built-in security, resiliency, fault-tolerance, durability
 - Replicated across multiple AZs (3 default)
 - No limits to storage and throughput
-- Need to provision reads and writes throughput (pay for provisioned)
-    - Read Capacity Unit (RCU) ⇒ Throughput for read ($0.00013 per RCU)
-        - 1 strongly consistent read and 2 eventually consistent read of 4KB/S per RCU
-    - Write Capacity Unit (WCU) ⇒ Throughput for write ($0.00065 per WCU)
-        - 1 write of 1KB/S per WCU
-    - Throughput can auto-scale or can be exceeded temporarily with Burst credits
-        - `ProvisionedThrougputException` error when out of credits
+- Read/Write Capacity Modes
+    - **Provisioned Mode (default)**
+        - Need to provision reads and writes throughput (pay for provisioned)
+            - Read Capacity Unit (RCU) ⇒ Throughput for read ($0.00013 per RCU)
+                - 1 strongly consistent read and 2 eventually consistent read of 4KB/S per RCU
+            - Write Capacity Unit (WCU) ⇒ Throughput for write ($0.00065 per WCU)
+                - 1 write of 1KB/S per WCU
+            - Throughput can auto-scale or can be exceeded temporarily with Burst credits
+                - `ProvisionedThrougputException` error when out of credits
+    - **On-Demand Mode**
+        - Read/writes automatically scale up/down with your workloads
 - Point-in-time restore
 - Global Table ⇒ Multi-region fully-replicated tables
 - Can use Database Migration Service (DMS) to migrate from other DBs
@@ -1933,7 +1937,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Unique primary key is required and decided at creation time
 - Secondary indexes
 - Query on primary key, sort key or indexes
-- No table size limit but 400KB item size limit
+- No table size limit but **400KB** item size limit
 - Infinite number of items per table
 - Each item has attributes that can be added over time and can be null
 - Item-level TTL
@@ -1954,6 +1958,21 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Enable event driven programming
 - Integrate with Lambda for real-time computing
 - Necessary for Cross-Region Replication
+
+## DynamoDB Global Tables
+
+- Make a DynamoDB table accessible with low latency in **multiple-regions**
+- Active-Active replication
+- Applications can **READ** and **WRITE** to the table in any region
+
+## DynamoDB –Time To Live (TTL)
+
+- Automatically delete items after an expiry timestamp
+
+## DynamoDB - Indexes
+
+- High level: allow to query on attributes other than the Primary Key
+
 
 ## DynamoDB Security
 
