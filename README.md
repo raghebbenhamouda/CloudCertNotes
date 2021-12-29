@@ -2630,6 +2630,15 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
         - Only one worker per message group
         - Optimizing Group ID means multiple workers can work in parallel on multiple queues
 
+## SQS - Security
+
+- Encryption:
+    - In-flight encryption using HTTPS API
+    - At-rest encryption using KMS keys
+    - Client-side encryption if the client wants to perform encryption/decryption itself
+- Access Controls: IAM policies to regulate access to the SQS API
+- SQS Access Policies (similar to S3 bucket policies)    
+
 # AWS Simple Notification Service (SNS)
 
 ## SNS Overview
@@ -2666,12 +2675,30 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Publish to platform endpoint
     - Works with most notification systems
 
+## SNS Security
+
+- same as SQS 
+
+## SNS – Message Filtering
+
+- JSON policy used to filter messages sent to SNS topic’s subscriptions
+- If a subscription doesn’t have a filter policy, it receives every message
+
+## SNS – FIFO Topic
+
+- Similar features as SQS FIFO:
+    - Ordering by Message Group ID (all messages in the same group are ordered)
+    - Deduplication using a Deduplication ID or Content Based Deduplication
+- **Can only have SQS FIFO queues as subscribers**
+
+
 ## SNS/SQS Fan Out
 
 - In case we want to delivery messages to multiple SQS queues
 - Publish to SNS Topic ⇒ Each SQS queue subscribes to that topic
 - Used for full decoupling and scaling receivers
 - Leverages SQS delayed or retrial processing capabilities
+- Make sure your SQS queue **access policy** allows for SNS to write
 
 # AWS Kinesis
 
@@ -2684,6 +2711,8 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Kinesis Data Stream
         - Low-latency real-time data ingestion
         - Receives real time data streams from click streams, IoT devices, logs/metrics, etc...
+        - Billing is per shard provisioned, can have as many shards as you want
+        - Data that shares the same partition goes to the same shard (ordering)
     - Kinesis Data Analytics
         - Real-time analytics on streams using SQL
         - Can create new Data Streams from the analyzed queries
@@ -2691,6 +2720,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
         - Pay per consumption rate
     - Kinesis Data Firehose
         - Serverless, fully managed
+        - Prepare and load real-time data streams into data stores
         - Load streams in other AWS services (Redshift, ElasticSearch, S3...)
         - Supports multiple data formats
         - Almost real time ⇒ 60 seconds latency for non-full batches or 32MB data at a time
@@ -2739,6 +2769,10 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - KMS for at-rest encryption
 - Client-side encryption
 - VPC endpoints to access Kinesis in a VPC
+
+## SQS vs SNS vs Kinesis
+
+![Screen Shot 2020-06-18 at 3 02 39 PM](https://github.com/raghebbenhamouda/CloudCertNotes/blob/master/Screenshot%20from%202021-12-29%2015-11-33.png)
 
 # Amazon MQ
 
