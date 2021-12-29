@@ -1510,6 +1510,10 @@ The requester must be authenticated in AWS (cannot be anonymous).
     - Snowball Edge
         - Improved Snowball, up to 100TB, storage/compute/compute w/GPU optimized
         - Supports EC2 AMIs and Lambda functions for processing on the go
+        - types:
+            -Snowball Edge Storage Optimized: 80 TB of HDD capacity for block volume and S3 compatible object storage
+            -Snowball Edge Compute Optimized: 42 TB of HDD capacity for block volume and S3 compatible object storage 
+    
     - Snowmobile
         - Exabyte-scale data transfer service for extremely large data transfers
 - Used when data transfer would be too slow/expensive over the network
@@ -2118,6 +2122,24 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Routing policies
 - Pay $0.50/month/hosted zone
 
+## Records
+
+- How you want to route traffic for a domain
+- Each record contains:
+    -Domain/subdomain Name – e.g., example.com
+    -Record Type – e.g., A or AAAA
+    -Value – e.g., 123.456.789.123
+    -Routing Policy – how Route 53 responds to queries
+    -TTL – amount of time the record cached at DNS Resolvers
+    
+## Hosted Zones
+
+ - ontainer for records that define how to route traffic to a domain and its subdomains
+ -A public Hosted Zones – contains records that specify how to rout traffic on the Internet (public domain names) application1.mypublicdomain.com
+ -Private Hosted Zones – contain records that specify how you route
+ -traffic within one or more VPCs (private domain names) application1.company.internal
+ -You pay $0.50 per month per hosted zone
+ 
 ## DNS TTL
 
 - Along with the DNS response, we send a TTL that specifies how long that response will live in the browser cache
@@ -2133,6 +2155,20 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Hostname to AWS Resource
     - Works for both root and non-root domains
     - Free, comes with health checks
+    - You cannot set an ALIAS record for an EC2 Dns name.
+
+## Route 53 – Health Checks Types
+
+- Monitor an Endpoint
+    - PAbout 15 global health checkers will check the endpoint health
+    - Health Checks can be setup to pass / fail based on the text in the first 5120 bytes of the response
+- Calculated Health Checks
+    - Combine the results of multiple Health Checks into a single Health Check
+    - You can use OR, AND, or NOT
+-Private Hosted Zones
+    -Route 53 health checkers are outside the VPC
+    -They can’t access private endpoints (private VPC or on-premises resource)
+    -You can create a CloudWatch Metric and associate a CloudWatch Alarm, then create a Health Check that checks the alarm itself 
 
 ## Routing Policies
 
@@ -2158,6 +2194,8 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Different from latency because it does not check whether that endpoint has the best performance for the user
     - Best approach is to create a base case if there's no match for the user's location
     - Ideal for serving localized and location-sensitive content
+- Geo-proximity Routing
+   lets you choose where traffic will be sent based on the geographic location of your users *and* your resources. You can choose to route more or less traffic based on a specified weight which is referred to as a bias. This bias either expands or shrinks the availability of a geographic region which makes it easy to shift traffic from resources in one location to resources in another. To use this routing method, you must enable Route53 traffic flow. If you want to control global traffic, use Geo-proximity routing. If you want traffic to stay in a local region, use Geolocation routing.
 - Multi-Value
     - Routing to multiple resources ⇒ More advanced version of Simple routing
     - Can attach health checks
@@ -2174,6 +2212,8 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Can expose external HTTPS and can talk to internal HTTPS backend
 - Geo Restriction
     - Can allow/deny countries from accessing your content
+        -**Whitelist**: Allow your users to access your content only if they're in one of the countries on a list of approved countries.
+        -**Blacklist:** Prevent your users from accessing your content if they're in one of the countries on a blacklist of banned countries.
     - Enforced by 3rd party Geo-IP database
     - Used to enforce Copyright laws
 - Great for static content that needs to be available everywhere
@@ -2184,11 +2224,32 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - For distribution of files
     - Enhanced security with CloudFront Origin Access Identity (OAI) as IAM Roles
     - Can be used as a way to upload files to S3
+    - to access your S3 buckets the edge location is going to use an OAI, it's an IAM role for your CloudFront origin. And using that role is going to access your S3 buckets and the bucket policy is going to accept.
 - Custom Origin (HTTP)
     - Application Load Balancer ⇒ Security group needs to allow Edge Location IP traffic
     - EC2 Instance ⇒ Security group needs to allow Edge Location IP traffic
     - S3 Website (must enable S3 static website hosting)
     - Any HTTP backend
+
+## CloudFront at a high level
+
+- The client will send an HTTP request directly into CloudFront,  then the edge location will forward the request to your origin and that includes the query strings. 
+-The edge location will cache the response and return the response back to our clients.
+-The next time another client makes a similar request, the edge location will first look into the cache before forwarding the request to the origin.
+
+
+## CloudFront vs S3 Cross Region Replication:
+
+- CloudFront:
+    - Global Edge network
+    - Files are cached for a TTL (maybe a day)
+    - **Great for caching static content that must be available everywhere**
+- S3 Cross Region Replication:
+    - Must be setup for each region you want replication to happen
+    - Files are updated in near real-time
+    - Read only
+    - **Great for dynamic content that needs to be available at low-latency in few regions**
+
 
 ## CloudFront Signed URL/Cookie
 
@@ -2197,15 +2258,41 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Signed URL gives access to one file ⇒ Need one Signed URL per file
 - Signed Cookie gives access to multiple files
 
+## CloudFront Advanced Concepts:
+
+- Pricing:
+    - The cost of data out per edge location varies
+    - The price is per gb of transferred data
+- Price Classes: to reduce the number of edge locations for cost reduction
+    -1. **Price Class All**: all regions – best performance
+    -2. **Price Class 200**: most regions, but excludes the most expensive regions
+    -3. **Price Class 100**: only the least expensive regions
+-Multiple Origin
+    -To route to different kind of origins based on the content type
+    -Exp: /api/ => ALB, /* => S3.
+-Origin Group
+   - To increase high-availability and do failover
+   - Origin Group: one primary and one secondary origin
+   - If the primary origin fails, the second one is used
+-Field Level Encryption
+   - Protect user sensitive information through application stack
+   - Exp: encrypt a user's credit card on the edge location with a public key, then the web server will decrypt it using a private key.
+   
+## Unicast IP vs Anycast IP
+
+- Unicast IP: one server holds one IP address
+- Anycast IP: all servers hold the same IP address and the client is routed to the nearest one
+       
 ## AWS Global Accelerator
 
 - Uses AWS internal network to serve content from Edge Locations to global clients
-- Leverages two Anycast IPs to send directly the traffic to the Edge Locations, which is then routed to your application
-- Works with public or private ALB, NLB, EC2 Instances and Elastic IPs
+- Leverages **2 Anycast IPs** to send directly the traffic to the Edge Locations, which is then routed to your application
+- Works with **public or private ALB, NLB, EC2 Instances and Elastic IPs**
 - Consistent performance by using AWS nework, fast regional failover and intelligent routing to lowest latency
 - Performs Health checks over the system
 - Secure due to only 2 IPs that need to be whitelisted and AWS Shield integration for DDoS Protection
 - Good for non-HTTP uses such as UDP (like gaming), IoT devices or VoIP or HTTP uses that require static IP globally
+
 
 ## Difference between CloudFront and Global Accelerator
 
@@ -2213,6 +2300,8 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Both integratw with AWS Shield for DDoS Protection
 - CloudFront improves content deliver for static (cacheable) and dynamic content by serving content from the Edge Locations
 - Global Accelerator proxyes requests at Edge Location to applications running in one or more Regions
+- Global Accelerator is a good fit if you have a non-HTTP uses cases such as gaming, IoT or Voice over IP, HTTP use case that requires a static IP addresses globally
+
 
 # AWS Lambda
 
