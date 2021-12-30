@@ -3154,14 +3154,16 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 ## DNS Resolution in VPC
 
 - Two main settings
-    - `enableDnsSupport` ⇒ Defaults to True, queries AWS DNS Server at 169.253.169.253
-    - `enableDnsHostname` ⇒ Defaults to False for custom VPC, True in default VPC, assigns public hostname to EC2 instance if it has a public IP when also `enableDnsSupport` is True
-- Both settings must be true to use custom DNS domain names in Private Zone in Route 53
+    - `enableDnsSupport` ⇒ Defaults to True
+        - Indicates whether the DNS resolution is supported
+        -  queries AWS DNS Server at **169.253.169.253** or the reserved IP address **xx.xx.xx.2**
+    - `enableDnsHostname` ⇒ Defaults to False for custom VPC, True in default VPC, assigns **public hostname** to EC2 instance if it has a **public IP** when also `enableDnsSupport` is True
+- **Both settings** must be true to use custom DNS domain names in **Private Zone( create internal private records for our DNS no need to own the domain name)** in Route 53
 
 ## Network Address Translation (NAT) Instances
 
 - EC2-based instances that allow other instances in private subnets to connect to internet
-- Must be launched in public subnets and have elastic IPs attached to it
+- Must be launched in public subnets and have **elastic IPs** attached to it
 - Must disable EC2 flag for Source/Destination Check
 - Traffic must be routed from private subnets to NAT Instances via route tables
 - Must define HTTP/HTTPS rules to allow traffic from the VPC
@@ -3173,10 +3175,10 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 
 - AWS Managed NAT with high bandwidth, availability and no administrative needs
 - Pay for how much bandwdith you use, as well as by the hour
-- AZ specific and requires Elastic IP and IGW
+-** AZ specific** and **requires Elastic IP and IGW**
 - Can only be used by instances in other subnets than the one it is created in
-- 5Gbps bandwidth, autoscales up to 45Gbps
-- For high availability, deploy NAT Gateways in multiple AZ
+- **5Gbps** bandwidth, autoscales up to 45Gbps
+- **For high availability, deploy NAT Gateways in multiple AZ**
 
 ## Network Access Control Lists (NACLs) and Security Groups
 
@@ -3191,12 +3193,23 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - ests that fit parameters defined in the inbound rules
 - SGs are stateful, so if a request passes inbound/outbound, it will also pass outbound/inbound
 - NACLs are stateless, so if a request passes inbound/outbound, outbound/inbound rules will still be evaluated
+- **Ephemeral Ports**
+    - Clients connect to a defined port, and expect a response on an ephemeral port
+    - NACL must allow ephermeral port
+
+
+## Reachability Analyzer
+
+- A network diagnostics tool that troubleshoots network connectivity between two endpoints in your VPC(s)
+- It builds a model of the network configuration, then checks the reachability based on these configurations **(it doesn’t send packets)**
+
 
 ## VPC Peering
 
 - Allows to connect two VPC privately using AWS' network
 - Must be set such as if they were on the same network, using appropriate CIDR
-- Can work cross-region and cross-account and you can reference security groups of peered VPCs
+- Can work c**ross-region and cross-account** and you can reference security groups of peered VPCs
+- **You must update route tables in each VPC’s subnets to ensure EC2 instances can communicate with each other**
 
 ## VPC Endpoints
 
@@ -3229,11 +3242,11 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 
 - Used to SSH into private instances
 - It is the public subnet that is then connected to other private subnets
-- Bastion Host's security must be extra tight and strict (usually Port 22 traffic from needed IPs)
+- **Bastion Host's security must be extra tight and strict (usually Port 22 traffic from needed IPs)**
 - Using an NLB, bastion hosts can be in private subnets
 - To maintain high availability, consider deploying multiple bastion hosts in different AZs and fronting NLBs before them (need TCP because of SSH) to failover to in case of a BH failure
 
-## Virtual Private Networks (VPN) and Gateways (VGW)
+## AWS Site-to-Site VPN
 
 - Used to connect on-premise data center to AWS network
 - Create a Customer Gateway on the on-premise DC and a VP Gateway on the AWS VPC
@@ -3245,20 +3258,20 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 
 - Allows to create a secure connection among different DCs with multiple VPN connections
 - Low cost hub-and-spoke model for connectivity between locations
-- VPN connection ⇒ Goes through the public internet
+- VPN connection ⇒ **Goes through the public internet**
 
 ## Direct Connect
 
-- Dedicated private connection from an on-prem DC to AWS network via Direct Connect locations
+- Dedicated **private connection ** from an on-prem DC to AWS network via Direct Connect locations
 - Needs dedicated connection on DC and a Virtual Private Gateways in your AWS VPC
 - You can access both private and public resources using the same connection
 - Supports IPv4/6
-- Data in transit is not encrypted ⇒ AWS Direct Connect + VPN for IPsec-encrypted connections
-- Direct Connect Gateway
-    - Used to connect one or more VPCs in different regions to our on-prem DC
+- **Data in transit is not encrypted ⇒ AWS Direct Connect + VPN for IPsec-encrypted connections**
+- **Direct Connect Gateway**
+    - **Used to connect one or more VPCs in different regions to our on-prem DC**
     - Even in separate regions, CIDRs can't overlap
     - Direct Connect Gateway does not create VPC peering
-- Two connection types ⇒ Takes longer than a month to establish new connection
+- Two connection types ⇒ **Takes longer than a month to establish new connection**
     - Dedicated connections
         - Physical cables installed by AWS Direct Connect Partners (DCP)
         - 1Gbps and 10Gbps
@@ -3273,9 +3286,9 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 
 ## AWS PrivateLink/VPC Endpoint Services
 
-- Safe way to expose services to 1000s of VPCs
+- Connect services privately from your service VPC to customers VPC
 - Works by leveraging Network Load Balancers on the service VPC and ENI on customer VPC
-- All traffic goes through the AWS Network and not the public internet
+- All traffic goes through the **AWS Network** and not the public internet
 
 ## Transit Gateway
 
@@ -3287,6 +3300,23 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Works with VPCs, Direct Connect Gateway and VPN Connections
 - Supports IP Multicast (only AWS service to do so)
 
+## Traffic Mirroring
+- Allows you to capture and inspect network traffic in your VPC
+- Route the traffic to security appliances that you manage
+- Capture the traffic
+    - **From (Source)** – ENIs
+    - **To (Targets)** – an ENI or a Network Load Balancer
+
+## IPv6 in VPC
+- **IPv4 cannot be disabled for your VPC and subnets**
+- You can enable IPv6 (they’re public IP addresses) to operate in dual-stack mode
+- Your EC2 instances will get at least a private internal IPv4 and a public IPv6
+
+## Egress-only Internet Gateway
+- **Used for IPv6 only** (similar to a NAT Gateway but for IPv6)
+- You can enable IPv6 (they’re public IP addresses) to operate in dual-stack mode
+- Your EC2 instances will get at least a private internal IPv4 and a public IPv6
+    
 # Other Services and Tools in AWS
 
 ## CI/CD Overview
