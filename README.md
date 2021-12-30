@@ -2995,8 +2995,9 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
         - For encrypt/decrypt and sign/verify
         - Used for outside-AWS encryption
 - CMK can't be retrieved by the user and is always managed by AWS
-- Up to 4KB of data per API call
+- **Up to 4KB of data per API call**
 - KMS keys are region-bound
+- Copying Snapshots across accounts by **attaching a KMS Key Policy to authorize cross-account access**
 - To copy KMS-Encrypted data, make a snapshot and transfer the encrypted snapshot specifying a new KMS key
 - When attaching KMS Key policies to Snapshots, you need to specify authorization for cross-account access
 - Key policies
@@ -3007,7 +3008,8 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Use cases
     - Sharing database passwords, third-party service credentials, SSL certificates' private key
     - Encrypting secrets to safely store them in code/environment variables
-
+- KMS Automatic Key Rotation is for Customer-managed CMK, rotation happened each **1 year**
+- KMS Manual Key Rotation,  When you want to rotate key every **90 days, 180 days, etc…**
 ## AWS Systems Manager (SSM) Parameter Store
 
 - Secure storage for configuration and secrets
@@ -3075,6 +3077,26 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Access to DDoS response team
     - Protection against attacks on EC2, ELB, CloudFront, Global Accelerator and Route 53
     - Protect against higher usage fees during DDoS attacks
+    
+## **Amazon GuardDuty**
+
+- Intelligent Threat discovery to Protect AWS Account 
+- Uses Machine Learning algorithms, anomaly detection, 3rd party data
+- Input data includes: 
+    -  CloudTrail Logs: unusual API calls, unauthorized deployments 
+    -  VPC Flow Logs: unusual internal traffic, unusual IP address •
+    -  DNS Logs: compromised EC2 instances sending encoded data within DNS queries
+- **Can protect against CryptoCurrency attacks (has a dedicated “finding” for it)**
+
+## **Amazon Inspector**
+- Automated Security Assessments for **EC2 instances** 
+- Analyze the running OS against known vulnerabilities
+- AWS Inspector Agent must be installed on OS in EC2 instances
+
+## **Amazon Macie*
+
+- machine learning and pattern matching to discover and protect your sensitive data in AWS
+- Macie helps identify and alert you to sensitive data, such as personally identifiable information (PII)
 
 # AWS Virtual Private Cloud (VPC)
 
