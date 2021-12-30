@@ -272,6 +272,7 @@
 
 - Global service that eases management of multiple AWS accounts
 - Automate creation of AWS accounts via API
+- Create accounts per department, per cost center, per dev / test / prod
 - Can enable CloudTrail and CloudWatch logs to send logs to central account
 - Service Control Policies (SCPs) ⇒ Explicit allows
     - Control who can use what services at Organizational Unit or Account level
@@ -299,7 +300,7 @@
 - Can share
     - VPC Subnets ⇒ Most likely to be in the exam
         - Must be from the same organization
-        - Allows to launch resources in the same subnets
+        - Allows to launch and share resources in the same subnets
         - Cannot share security groups
         - Can manage own resources in shared subnets but can't view, modify or delete resources owned by other accounts
     - AWS Transit Gateway
@@ -2085,7 +2086,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Leader node ⇒ query planning and result aggregation
     - Compute node ⇒ listen for leader instruction, perform queries and send results back
 - Redshift Spectrum
-    - Directly query against S3, no load
+    - • Query data that is already in S3 without loading it
     - Not serverless, need to provision clusters ⇒ Different from Athena
     - Query is executed by Spectrum nodes
 - Backup and restore options
@@ -2428,13 +2429,13 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Serverless service to create APIs
 - Supports REST and WebSocket protocols
 - Handles versioning, deployment environments and authentication/authorization
-- API Keys, request throttling,
+- API Keys, request throttling
 - Open standards for API definitions and exports like Swagger and OpenAPI
 - Validate/transform request and responses
 - Generate SDK and API specs
 - Cache API responses
 - Several integrations
-    - Lambda ⇒ Expose cloud-based REST API
+    - Lambda ⇒ Invoke Lambda function, Easy way to expose REST API backed by AWS Lambda
     - HTTP ⇒ On-premise APIs, useful to use additional API Gateway features
     - AWS Services ⇒ Useful to use additional API Gateway features
 - Endpoint Types
@@ -2447,9 +2448,9 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - IAM Permissions ⇒ For users in your AWS account
     - Create IAM policy and attach it to a IAM User or Role
     - API Gateway verifies the permissions
-    - Uses Sig v4 to identify correct IAM credentials in headers passed on with the call
+    - Uses **Sig v4** to identify correct IAM credentials in headers passed on with the call
 - Lambda/Custom Authorizer ⇒ 3rd party authorizations
-    - Validates tokens via Lambda
+    - Validates the tokens being passed in header via Lambda
     - Caches results of authorization
     - Used for OAuth/SAML/3rd party auth
     - Lambda function must return an IAM policy for the user
@@ -2467,7 +2468,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Login with email/password, verify email/phone numbers, MFA capabilities
     - Can use Federated Identities ⇒ Login with Facebook, Google, GitHub, SAML...
     - Returns JSON Web Tokens (JWT) for authentication purposes
-    - Integrates with API Gateway
+    - **Integrates with API Gateway**
     - Sign-in functionality
 - Cognito Federated Identity Pools (Federated Users)
     - Provide AWS credentials to users to access AWS resources and services
@@ -2879,8 +2880,8 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 ## CloudWatch Dashboards
 
 - Quick access for important metrics with auto-refresh
-- Global access
-- Can include graphs from different regions as well as different time zones and time ranges
+- **Global access**
+- Can include **graphs from different regions as well as different time zones and time ranges**
 - 3 50-metrics dashboards for free, $3/dashboard/month after
 
 ## CloudWatch Logs
@@ -2895,13 +2896,24 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Route 53 ⇒ DNS Queries
     - CloudTrail ⇒ Filtered logs
     - CloudWatch ⇒ Log agents on EC2 instances
-- CloudWatch can redirect logs to other services like S3, ElasticSearch, etc..
+- CloudWatch can redirect logs to other services like S3, ElasticSearch, Lambda, Kinesis
 - Logs are stored in groups (arbitrary) and streams (instances within application/container/files)
 - KMS encryption at group level
 - Can define expiration policies for the logs
 - Need to have correct IAM permissions to send logs to CloudWatch
-- Can use filter expression on logs to find specific information or trigger alarms
+- Can use **filter expression on logs** to find specific information or trigger alarms
 - Logs Insights can be used to query logs and add queries to Dashboards
+- S3 Export
+    - Log data can take `up to 12` hours to become available for export
+    - The API call is **CreateExportTask**
+
+## CloudWatch Logs for EC2
+
+- By default, no logs from your EC2 machine will go to CloudWatch
+- You need to run a **CloudWatch agent** on EC2 to push the log files you want
+- Two types of Agents:
+    - **CloudWatch Logs Agent** : Old version Can only send to CloudWatch Logs
+    - **CloudWatch Unified Agent** : Collect additional system-level metrics such as RAM, processes, etc…
 
 ## CloudWatch Alarms
 
@@ -2918,6 +2930,15 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Scheduled or pattern-reactive events that trigger Lambda functions or SQS/SNS/Kinesis messages
 - Create small JSON documents with event information such as state changes
 
+## Amazon EventBridge
+
+- next evolution of CloudWatch Events
+- Default event bus: generated by AWS services (CloudWatch Events)
+- Partner event bus: receive events from SaaS service or applications (Zendesk, DataDog, Segment, Auth0…)
+- Custom Event buses: for your own applications
+- EventBridge can analyze the events in your bus and infer the schema
+- The Schema Registry allows you to generate code for your application, that will know in advance how data is structured in the event bus
+
 # Auditing: CloudTrail and AWS Config
 
 ## CloudTrail Overview
@@ -2927,7 +2948,20 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Used for governance, compliance and audit purposes
 - CloudTrail Logs can be put in CloudWatch Logs
 - Track entire lifecycle of AWS resources
+- Events are stored for **90 days** in CloudTrail
+- To keep events beyond this period, log them to S3 and use Athena
 
+## CloudTrail Events
+
+- Management Events
+    - Operations that are performed on resources in your AWS account
+    - By default, trails are configured to log management events   
+- Data Events   
+    - By default, data events are not logged (because high volume operations) 
+    - Exp: S3 putObject
+- CloudTrail Insights Events
+    - Enable CloudTrail Insights to detect unusual activity in your account
+    
 ## AWS Config Overview
 
 - Records configurations and its changes over time
@@ -2937,8 +2971,9 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - You can view compliance and configuration of resources over time, as well as CloudTrail logs
 - Uses AWS managed config rules or custom Lambda-defined rules
 - Rules are evaluated or triggered on config change, regular intervals or CloudWatch Alarms
-- Rules can auto-remediate (ex: stop non-complying instances)
-- Config don't deny permissions so they can't prevent things from happening
+- **Rules can auto-remediate (ex: stop non-complying instances)**
+- **Config don't deny permissions so they can't prevent things from happening**
+- **Use EventBridge to trigger notifications when AWS resources are noncompliant**
 - $2/month per active rule
 
 # AWS Encryption and Security services
@@ -3375,7 +3410,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 
 ## Glue
 
-- Fully managed ETL service
+- Fully managed ETL(extract, transform, and load) service
 - Uses Spark in the backend
 - Automates data preparation for analytics
 - Performs schema inference on crawled data and can automatically generate code
