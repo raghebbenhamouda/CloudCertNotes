@@ -3093,7 +3093,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Analyze the running OS against known vulnerabilities
 - AWS Inspector Agent must be installed on OS in EC2 instances
 
-## **Amazon Macie*
+## **Amazon Macie**
 
 - machine learning and pattern matching to discover and protect your sensitive data in AWS
 - Macie helps identify and alert you to sensitive data, such as personally identifiable information (PII)
@@ -3175,7 +3175,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 
 - AWS Managed NAT with high bandwidth, availability and no administrative needs
 - Pay for how much bandwdith you use, as well as by the hour
--** AZ specific** and **requires Elastic IP and IGW**
+- **AZ specific** and **requires Elastic IP and IGW**
 - Can only be used by instances in other subnets than the one it is created in
 - **5Gbps** bandwidth, autoscales up to 45Gbps
 - **For high availability, deploy NAT Gateways in multiple AZ**
