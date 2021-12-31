@@ -3350,7 +3350,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Metadata ⇒ Information about the stack
     - Helpers ⇒ References and functions needed for the template
 - StackSets
-    - Single operation to CRUD stacks in multiple accounts/regions
+    - Create, update, or delete stacks across** multiple accounts and regions** with a single operation
     - Need to use root account to create StackSet, trusted account to CRUD stack instances
     - When a StackSet is updated, all the associated stacks are updated
 
@@ -3434,20 +3434,20 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 ## Step Functions
 
 - Serverless orchestration for Lambda functions and workflows
-- Represent flow as JSON state machine
+- Represent flow as JSON **state machine**
 - Integrates with many other services such as ECS, EC2, API Gateway, etc...
 - 1 year maximum execution time
 
 ## Simple Workflow Service (SWS)
 
 - Orchestration of work among applications
-- Basically a non-serverless version of Step Functions (runs on EC2)
+- B**asically a non-serverless version of Step Functions (runs on EC2)**
 - 1 year maximum execution time
 - Effectively phased out for Step Functions
 
 ## AppSync
 
-- GraphQL as a Service
+- **GraphQL** as a Service
 - Store and sync data across mobile/web apps in real time
 - Uses GraphQL
 - Integrates with DynamoDB and Lambda Functions
@@ -3503,9 +3503,10 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Key DR strategies (Highest RTO to lowest RPO)
     - Backup and Restore
         - High RPO and high RTO
+        - Recreate infrastructure when we need it
         - Can be very dangerous if backups are too spaced out
         - Can be slow to recovery if restoring many services/databases
-        - Cheap
+        - Cheap(**the only cost we have is the cost of storing these backups**)
     - Pilot Light
         - Small version of the app is always running in the cloud in the background
         - Ideal and feasible only for the critical core systems
@@ -3539,6 +3540,18 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Chaos
         - Netflix Chaos Monkeys to test fault tolerance in production environments
 
+## DMS – Database Migration Service
+    
+- Our source database may be on-premise
+- We run an EC2 instance that has the **DMS software**, and it will pull the data from the source database and continuously put it in the target database
+- The source database remains available during the migration
+- Supports:
+    - **Homogeneous migrations**: ex Oracle to Oracle
+    - **Heterogeneous migrations**: ex Microsoft SQL Server to Aurora
+- **AWS Schema Conversion Tool (SCT)**
+    - Convert your Database’s Schema from one engine to another
+    - You do not need to use SCT if you are migrating the same DB engine
+    
 ## On-Premise Strategies
 
 - You can use Amazon Linux 2 AMIs on on-premise VMs by downloading the AMI's .iso
@@ -3562,6 +3575,22 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
 - Ongoing replication
     - Site-to-Site VPN with DMS or DataSync
 
+## AWS Backup
+
+- Fully managed service 
+- Centrally manage and automate backups across AWS services 
+- Supported services:
+    - Amazon FSx
+    - Amazon EFS
+    - Amazon DynamoDB
+    - Amazon EC2
+    - Amazon EBS
+    - Amazon RDS (All DBs engines)
+    - Amazon Aurora 
+    - AWS Storage Gateway (Volume Gateway)
+- Supports cross-region/account backups 
+
+    
 ## Caching Strategies
 
 - Anticipate data update patterns when choosing cache TTL
@@ -3587,7 +3616,7 @@ The caveat for Read Replicas is that they are subject to small amounts of replic
     - Elastic Fabric Adapter ⇒ Improved ENA for distributed HPC that works only on Linux and leverages Message Passing Interface standards to provide low-latency network performace
 - Storage
     - Instance-attached storage ⇒ EBS (IO1, up to 64,000 IOPS) or Instance storage (millions of IOPS, physical storage)
-    - Network storage ⇒ S3 (non-FS blob), EFS (IOPS based on provisioned IOPS or size) or FSx for Lustre (HPC optimized, backed by S3, millions of IOPS)
+    - Network storage ⇒ S3 (non-FS blob), EFS (IOPS based on provisioned IOPS or size) or FSx for Lustre (HPC optimized, backed by S3, millions of IOPS), **For cluster of EC2**
 - Automation
     - AWS Batch ⇒ Multinode parallel jobs that span multiple EC2 instances
     - Parallel Cluster ⇒ Automatic creation of VPC, subnet, cluster and instance type for HPC
